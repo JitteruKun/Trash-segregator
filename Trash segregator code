@@ -1,0 +1,57 @@
+#include <Stepper.h>
+#include <Servo.h>
+
+const int stepsPerRevolution = 2048;
+Stepper stepperMotor(stepsPerRevolution, 8, 10, 9, 11);
+
+Servo binOpener;
+const int servoPin = 5;
+
+const int inductiveSensor = 2;
+const int irSensor = 3;
+const int rainSensor = 4;
+
+const int posWet = 0;
+const int posDry = 512;
+const int posMetal = 1024;
+const int posPlastic = 1536;
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(inductiveSensor, INPUT);
+    pinMode(irSensor, INPUT);
+    pinMode(rainSensor, INPUT);
+
+    binOpener.attach(servoPin);
+    stepperMotor.setSpeed(10);
+}
+
+void loop() {
+    int metal = digitalRead(inductiveSensor);
+    int plastic = digitalRead(irSensor);
+    int wet = digitalRead(rainSensor);
+
+    if (wet == HIGH) {
+        rotateTo(posWet);
+    } else if (metal == HIGH) {
+        rotateTo(posMetal);
+    } else if (plastic == HIGH) {
+        rotateTo(posPlastic);
+    } else {
+        rotateTo(posDry);
+    }
+
+    openBin();
+    delay(1000);
+}
+
+void rotateTo(int targetPos) {
+    stepperMotor.step(targetPos);
+    delay(500);
+}
+
+void openBin() {
+    binOpener.write(90);
+    delay(1000);
+    binOpener.write(0);
+}
