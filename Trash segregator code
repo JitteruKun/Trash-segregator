@@ -1,37 +1,44 @@
-#include <Stepper.h>
 #include <Servo.h>
 
-const int stepsPerRevolution = 2048;
-Stepper stepperMotor(stepsPerRevolution, 8, 10, 9, 11);
+const int servoPin = 7;
+const int irSensor = 5;
+const int rainSensor = A0;
+const int inductiveSensor = 6;
 
-Servo binOpener;
-const int servoPin = 5;
-
-const int inductiveSensor = 2;
-const int irSensor = 3;
-const int rainSensor = 4;
+const int in1 = 8;
+const int in2 = 9;
+const int in3 = 10;
+const int in4 = 11;
 
 const int posWet = 0;
-const int posDry = 512;
-const int posMetal = 1024;
-const int posPlastic = 1536;
+const int posDry = 128;
+const int posMetal = 256;
+const int posPlastic = 384;
+
+Servo binOpener;
 
 void setup() {
     Serial.begin(9600);
-    pinMode(inductiveSensor, INPUT);
+
+    pinMode(servoPin, OUTPUT);
     pinMode(irSensor, INPUT);
     pinMode(rainSensor, INPUT);
+    pinMode(inductiveSensor, INPUT);
+
+    pinMode(in1, OUTPUT);
+    pinMode(in2, OUTPUT);
+    pinMode(in3, OUTPUT);
+    pinMode(in4, OUTPUT);
 
     binOpener.attach(servoPin);
-    stepperMotor.setSpeed(10);
 }
 
 void loop() {
     int metal = digitalRead(inductiveSensor);
     int plastic = digitalRead(irSensor);
-    int wet = digitalRead(rainSensor);
+    int wet = analogRead(rainSensor) > 500;
 
-    if (wet == HIGH) {
+    if (wet) {
         rotateTo(posWet);
     } else if (metal == HIGH) {
         rotateTo(posMetal);
@@ -45,9 +52,43 @@ void loop() {
     delay(1000);
 }
 
-void rotateTo(int targetPos) {
-    stepperMotor.step(targetPos);
-    delay(500);
+void rotateTo(int steps) {
+    for (int i = 0; i < steps; i++) {
+        stepSequence(1);
+        stepSequence(2);
+        stepSequence(3);
+        stepSequence(4);
+    }
+}
+
+void stepSequence(int step) {
+    switch (step) {
+        case 1:
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, LOW);
+            break;
+        case 2:
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, LOW);
+            break;
+        case 3:
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
+            break;
+        case 4:
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
+            break;
+    }
+    delay(10);
 }
 
 void openBin() {
